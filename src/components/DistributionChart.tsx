@@ -1,21 +1,7 @@
 import { motion } from 'motion/react'
 import { useMemo } from 'react'
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Line,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
-import {
-  createDistributionData,
-  formatNumber,
-  type ProbabilityMode,
-} from '../lib/statistics'
+import { Area, AreaChart, CartesianGrid, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { createDistributionData, formatNumber, type ProbabilityMode } from '../lib/statistics'
 
 interface DistributionChartProps {
   mode: ProbabilityMode
@@ -32,18 +18,15 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: Tooltip
   if (!active || !point) return null
 
   return (
-    <div className="border border-ink/15 bg-paper/95 px-3 py-2 text-[11px] shadow-sm backdrop-blur">
-      <div className="font-semibold text-ink">t = {formatNumber(point.x, 3)}</div>
-      <div className="mt-0.5 text-muted">밀도 {formatNumber(point.density, 4)}</div>
+    <div className="rounded-lg border border-border bg-card/95 px-3 py-2 text-[11px] shadow-md backdrop-blur">
+      <div className="font-semibold text-foreground">t = {formatNumber(point.x, 3)}</div>
+      <div className="mt-0.5 text-muted-foreground">밀도 {formatNumber(point.density, 4)}</div>
     </div>
   )
 }
 
 export function DistributionChart({ mode, degrees, criticalValue }: DistributionChartProps) {
-  const data = useMemo(
-    () => createDistributionData(mode, degrees, criticalValue),
-    [mode, degrees, criticalValue],
-  )
+  const data = useMemo(() => createDistributionData(mode, degrees, criticalValue), [mode, degrees, criticalValue])
   const absoluteCritical = Math.abs(criticalValue)
   const markers = mode === 'two' ? [-absoluteCritical, absoluteCritical] : [criticalValue]
 
@@ -57,25 +40,25 @@ export function DistributionChart({ mode, degrees, criticalValue }: Distribution
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 30, right: 14, bottom: 3, left: 2 }}>
-          <CartesianGrid vertical={false} stroke="var(--line)" strokeOpacity={0.4} />
+          <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.7} />
           <XAxis
             dataKey="x"
             type="number"
             domain={['dataMin', 'dataMax']}
             tickCount={5}
-            axisLine={{ stroke: 'var(--line)' }}
+            axisLine={{ stroke: 'var(--border)' }}
             tickLine={false}
-            tick={{ fill: 'var(--muted)', fontSize: 10 }}
+            tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
             tickFormatter={(value: number) => formatNumber(value, 1)}
           />
           <YAxis hide domain={[0, 'dataMax + 0.02']} />
-          <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'var(--line)', strokeDasharray: '3 3' }} />
+          <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'var(--border)', strokeDasharray: '3 3' }} />
           <Area
             type="monotone"
             dataKey="shade"
             stroke="none"
-            fill="var(--accent)"
-            fillOpacity={0.3}
+            fill="var(--primary)"
+            fillOpacity={0.2}
             isAnimationActive
             animationDuration={450}
             connectNulls={false}
@@ -84,7 +67,7 @@ export function DistributionChart({ mode, degrees, criticalValue }: Distribution
             type="monotone"
             dataKey="density"
             dot={false}
-            stroke="var(--ink)"
+            stroke="var(--foreground)"
             strokeWidth={2.2}
             isAnimationActive
             animationDuration={450}
@@ -93,12 +76,12 @@ export function DistributionChart({ mode, degrees, criticalValue }: Distribution
             <ReferenceLine
               key={marker}
               x={marker}
-              stroke="var(--accent)"
+              stroke="var(--primary)"
               strokeDasharray="5 5"
               label={{
                 value: `t=${formatNumber(marker, 3)}`,
                 position: marker < 0 ? 'insideTopLeft' : 'insideTopRight',
-                fill: 'var(--accent)',
+                fill: 'var(--primary)',
                 fontSize: 10,
                 fontWeight: 700,
               }}

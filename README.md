@@ -30,6 +30,7 @@
 | TypeScript | 정적 타입 검사 | 확률, 자유도, 입력 모드 사이의 실수를 빌드 단계에서 발견 |
 | Vite 8 | 개발 서버와 프로덕션 빌드 | 정적 GitHub Pages 앱에 필요한 구성이 가볍고 빠름 |
 | Tailwind CSS 4 | 레이아웃과 반응형 스타일 | 반복되는 간격·색상·상태 스타일을 일관되게 관리 |
+| shadcn/ui + Radix UI | 버튼, 입력, 탭, 툴팁 | 접근성을 갖춘 UI 원형을 프로젝트 안에서 직접 소유하고 일관되게 확장 |
 | jStat | 통계 계산 | Student t 분포의 PDF, CDF, 역 CDF 제공 |
 | Recharts | 분포 그래프 | React 상태와 함께 그래프를 선언적으로 갱신 |
 | Motion | UI 전환 | 입력 모드, 결과, 그래프 전환을 절제된 모션으로 표현 |
@@ -45,10 +46,16 @@
 ├─ .github/workflows/pages.yml   # 테스트·빌드·GitHub Pages 배포
 ├─ src/
 │  ├─ components/
+│  │  ├─ ui/                    # shadcn/ui 방식의 재사용 UI 컴포넌트
+│  │  │  ├─ button.tsx
+│  │  │  ├─ input.tsx
+│  │  │  ├─ tabs.tsx
+│  │  │  └─ tooltip.tsx
 │  │  └─ DistributionChart.tsx  # Recharts 기반 t 분포 시각화
 │  ├─ lib/
 │  │  ├─ statistics.ts          # 검증, 확률 변환, t 계산, 그래프 데이터
-│  │  └─ statistics.test.ts     # 대표 임계값과 입력 규칙 테스트
+│  │  ├─ statistics.test.ts     # 대표 임계값과 입력 규칙 테스트
+│  │  └─ utils.ts               # shadcn/ui 클래스 병합 도우미
 │  ├─ types/
 │  │  └─ jstat.d.ts             # 실제 사용하는 jStat API의 최소 타입 선언
 │  ├─ App.tsx                   # 계산기 화면과 React 상태
@@ -66,6 +73,7 @@
 - 통계 공식과 값 변환은 `src/lib/statistics.ts`에만 둡니다.
 - 화면 컴포넌트에서 jStat을 직접 호출하지 않습니다.
 - 그래프 표현은 `DistributionChart.tsx`에 한정합니다.
+- 버튼·입력·탭 같은 공통 요소는 `src/components/ui`의 shadcn/ui 컴포넌트를 재사용합니다.
 - 입력 규칙이 바뀌면 Zod 스키마와 Vitest를 함께 수정합니다.
 - 새로운 계산기를 추가할 때 기존 계산 함수를 복사하지 말고 공통 분포 계층을 설계합니다.
 
