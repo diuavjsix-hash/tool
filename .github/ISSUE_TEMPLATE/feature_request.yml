@@ -1,0 +1,31 @@
+name: 기능 제안
+description: 새 계산 기능이나 사용성 개선을 제안합니다.
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 해결하려는 문제
+      description: 어떤 학습·계산 상황에서 불편한지 설명해 주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 제안 기능
+      description: 원하는 입력, 결과와 상호작용 예시를 적어 주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: rules
+    attributes:
+      label: 계산 규칙 또는 참고값
+      description: 정의역, 단위, 반올림 또는 검증 가능한 예시가 있으면 적어 주세요.
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: 범위 확인
+      options:
+        - label: 서버 저장이나 외부 데이터 전송이 필요한 기능인지 표시했습니다.
+          required: true

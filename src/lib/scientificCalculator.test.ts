@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { evaluateExpression, formatCalculatorResult } from './scientificCalculator'
+import { evaluateExpression, formatCalculatorResult, MAX_EXPRESSION_LENGTH } from './scientificCalculator'
 
 function expectValue(expression: string, expected: number, answer?: number) {
   const result = evaluateExpression(expression, answer)
@@ -51,6 +51,13 @@ describe('scientific calculator expression engine', () => {
     expect(evaluateExpression('(2 + 3')).toMatchObject({ success: false })
     expect(evaluateExpression('2 @ 3')).toMatchObject({ success: false })
     expect(evaluateExpression('Ans + 1')).toMatchObject({ success: false })
+  })
+
+  it('rejects expressions beyond the documented length limit', () => {
+    expect(evaluateExpression('1'.repeat(MAX_EXPRESSION_LENGTH + 1))).toMatchObject({
+      success: false,
+      error: `수식은 ${MAX_EXPRESSION_LENGTH}자 이하로 입력해 주세요.`,
+    })
   })
 })
 

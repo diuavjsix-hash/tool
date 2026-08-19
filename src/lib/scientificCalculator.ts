@@ -1,3 +1,4 @@
+/** A session-only calculation record. Both forms are kept so the visual formula can be restored. */
 export interface HistoryEntry {
   id: string
   expression: string
@@ -29,7 +30,7 @@ type ExpressionNode =
 
 class CalculatorError extends Error {}
 
-const MAX_EXPRESSION_LENGTH = 256
+export const MAX_EXPRESSION_LENGTH = 256
 
 function normalizeExpression(expression: string) {
   return expression
@@ -269,6 +270,7 @@ export function formatCalculatorResult(value: number) {
   return Number(normalized.toPrecision(12)).toString()
 }
 
+/** Safely tokenizes, parses, and evaluates one expression without eval or dynamic code execution. */
 export function evaluateExpression(expression: string, answer?: number): CalculatorEvaluation {
   const trimmed = expression.trim()
   if (!trimmed) return { success: false, error: '계산할 수식을 입력해 주세요.' }

@@ -1,0 +1,48 @@
+name: 계산 또는 화면 오류
+description: 잘못된 계산 결과, 입력 문제 또는 화면 동작을 제보합니다.
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: dropdown
+    id: tool
+    attributes:
+      label: 도구
+      options:
+        - Student's t distribution
+        - 공학용 계산기
+        - 홈·공통 화면
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: 입력값과 재현 순서
+      description: 수식, 확률 방식, 자유도, 누른 버튼과 키를 순서대로 적어 주세요.
+      placeholder: "예: 공학용 계산기에서 200 + 10% 입력 후 Enter"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 예상 결과
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 실제 결과와 오류 문구
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 환경
+      description: 기기, 운영체제와 브라우저를 적어 주세요.
+      placeholder: "예: iPhone, iOS 19, Safari"
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: 개인정보 확인
+      options:
+        - label: 첨부 내용에 개인정보나 민감한 데이터가 없습니다.
+          required: true

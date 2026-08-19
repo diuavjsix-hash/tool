@@ -1,14 +1,28 @@
 {
-  "name": "t-finder",
+  "name": "tool-lab",
   "private": true,
   "version": "2.0.0",
+  "description": "Browser-only statistical and scientific calculation tools",
+  "homepage": "https://diuavjsix-hash.github.io/tool/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/diuavjsix-hash/tool.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck": "tsc -b --pretty false",
+    "check:docs": "node scripts/check-doc-links.mjs",
+    "check:bundle": "node scripts/check-bundle-size.mjs",
+    "check": "pnpm check:docs && pnpm test && pnpm build && pnpm check:bundle"
+  },
+  "engines": {
+    "node": ">=24",
+    "pnpm": ">=11.9"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",

@@ -3,25 +3,11 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Calculator, Code2, Home, Sigma } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { TooltipProvider } from './components/ui/tooltip'
-
-type AppRoute = 'home' | 't' | 'scientific'
+import { hashForRoute, routeFromHash, routeTitles, type AppRoute } from './lib/routing'
 
 const HomePage = lazy(() => import('./pages/HomePage'))
 const TCalculatorPage = lazy(() => import('./pages/TCalculatorPage'))
 const ScientificCalculatorPage = lazy(() => import('./pages/ScientificCalculatorPage'))
-
-const routeTitles: Record<AppRoute, string> = {
-  home: 'tool·lab — 계산 도구 모음',
-  t: 't 임계값 계산기 — tool·lab',
-  scientific: '공학용 계산기 — tool·lab',
-}
-
-function routeFromHash(hash: string): AppRoute | null {
-  const path = hash.replace(/^#\/?/, '').replace(/\/+$/, '')
-  if (!path) return 'home'
-  if (path === 't' || path === 'scientific') return path
-  return null
-}
 
 function RouteLink({
   route,
@@ -35,7 +21,7 @@ function RouteLink({
   icon: React.ReactNode
 }) {
   const active = route === currentRoute
-  const href = route === 'home' ? '#/' : `#/${route}`
+  const href = hashForRoute(route)
 
   return (
     <a

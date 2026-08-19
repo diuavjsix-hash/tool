@@ -1,128 +1,109 @@
 # tool·lab
 
-통계 계산과 일반 수식을 한곳에서 처리하는 정적 계산 도구 모음입니다. 서버와 계정 없이 동작하며 입력한 수식과 계산 기록은 외부로 전송되지 않습니다.
+[![Deploy to Pages](https://github.com/diuavjsix-hash/tool/actions/workflows/pages.yml/badge.svg)](https://github.com/diuavjsix-hash/tool/actions/workflows/pages.yml)
+[![Pull request checks](https://github.com/diuavjsix-hash/tool/actions/workflows/quality.yml/badge.svg)](https://github.com/diuavjsix-hash/tool/actions/workflows/quality.yml)
+
+통계 계산과 일반 수식을 한곳에서 처리하는 정적 계산 도구 모음입니다. 계정이나 백엔드 없이 브라우저에서만 동작합니다.
 
 - 실행 사이트: <https://diuavjsix-hash.github.io/tool/>
 - 저장소: <https://github.com/diuavjsix-hash/tool>
 
+## 문서 안내
+
+| 문서 | 언제 읽으면 좋은가 |
+| --- | --- |
+| [기여 가이드](CONTRIBUTING.md) | 로컬 실행, 변경 절차, 테스트와 PR 준비 |
+| [아키텍처](docs/ARCHITECTURE.md) | 파일별 책임, 데이터 흐름, 새 도구·함수 추가 방법 |
+| [계산 계약](docs/CALCULATION_CONTRACTS.md) | t 분포 및 수식 엔진의 입력·출력·오류·정밀도 규칙 |
+| [유지보수·운영](docs/MAINTENANCE.md) | 배포, 의존성 갱신, 장애 대응, 정기 점검 |
+| [보안 정책](SECURITY.md) | 취약점 제보와 개인정보·실행 경계 |
+
+계산 결과를 바꾸는 작업이라면 [계산 계약](docs/CALCULATION_CONTRACTS.md)과 해당 단위 테스트를 먼저 확인하세요.
+
 ## 제공 도구
 
-### t 임계값 계산기
+### Student's t distribution
 
-- 누적확률 `P(T ≤ t)`, 우측 유의수준 `P(T ≥ t)`, 양측 유의수준 `P(|T| ≥ t)` 입력
-- 자유도 `1–1,000,000`, 자주 사용하는 확률·자유도 프리셋
-- Student t 분포의 PDF, CDF, 역 CDF 계산
-- 임계값과 선택 확률 영역을 보여주는 반응형 분포 그래프
-- 결과 복사, 입력 검증, 키보드 포커스와 모션 감소 설정 지원
+- 누적확률, 우측 유의수준, 양측 유의수준으로 임계값 계산
+- 자유도 `1–1,000,000`과 확률·자유도 프리셋
+- Student t 분포 그래프와 선택 확률 영역 표시
+- 입력 모드 전환 시 같은 꼬리 확률을 보존
 
 ### 공학용 계산기
 
-- 편집 가능한 수식 입력, 화면 키패드와 물리 키보드 지원
-- 사칙연산, 괄호, 단항 음수와 일반 계산기 방식의 퍼센트
-- 거듭제곱, 제곱, 제곱근, 역수
-- 자연로그 `ln`, 상용로그 `log`, `eˣ`, `10ˣ`, 상수 `π`와 `e`
-- 암시적 곱셈: `2π`, `2(3+4)`, `(1+2)(3+4)`
-- 직전 결과 `Ans`, 결과 복사, 현재 탭의 최근 계산 30개
-- `Enter`로 계산, `Escape`로 초기화
+- 실제 수학 표기의 루트, 지수, 로그와 위·아래 분수 입력
+- 사칙연산, 괄호, 단항 음수, 일반 계산기 방식 퍼센트
+- `π`, `e`, `Ans`, 암시적 곱셈과 최근 계산 30개
+- 화면 키패드, 물리 키보드와 상·하·좌·우 수식 커서 이동
+- `eval` 없이 전용 토큰화·파싱·평가 엔진으로 계산
 
-계산 엔진은 `eval`이나 외부 수학 엔진을 사용하지 않습니다. 자체 토큰화·파싱·평가 과정을 거치며, 내부 계산은 JavaScript `Number` 정밀도를 사용하고 결과는 최대 12자리 유효숫자로 표시합니다.
+## 빠른 시작
 
-## 페이지 구조
+요구 환경은 Node.js 24, pnpm 11.9 이상과 Git입니다. `.nvmrc`와 `packageManager`가 기준 버전을 고정합니다.
 
-GitHub Pages에서 새로고침과 직접 링크가 안정적으로 동작하도록 해시 경로를 사용합니다.
+```bash
+pnpm install --frozen-lockfile
+pnpm dev
+```
 
-| 경로 | 화면 |
+커밋 전 전체 검증:
+
+```bash
+pnpm check
+```
+
+`pnpm check`는 문서 링크, Vitest, TypeScript·프로덕션 빌드와 번들 크기 예산을 순서대로 검사합니다. 개별 명령은 다음과 같습니다.
+
+| 명령 | 역할 |
+| --- | --- |
+| `pnpm test` | 계산·변환·라우팅 단위 테스트 |
+| `pnpm test:watch` | 개발 중 관련 테스트 반복 실행 |
+| `pnpm typecheck` | TypeScript 정적 검사 |
+| `pnpm build` | 타입 검사 후 `dist` 프로덕션 빌드 |
+| `pnpm check:docs` | Markdown 내부 문서 링크 검사 |
+| `pnpm check:bundle` | 빌드된 주요 청크의 크기 예산 검사 |
+| `pnpm preview` | 프로덕션 빌드 로컬 확인 |
+
+## 구조 요약
+
+```text
+src/
+├─ pages/                    화면 상태와 사용자 상호작용
+├─ components/               그래프와 공용 UI
+├─ lib/
+│  ├─ statistics.ts          t 분포 검증·계산·그래프 데이터
+│  ├─ scientificCalculator.ts 수식 토큰화·파싱·평가·표시
+│  ├─ mathfield.ts           시각 수식과 엔진 문법 사이 변환
+│  └─ routing.ts             해시 경로의 단일 규칙
+├─ App.tsx                   공통 셸과 지연 로딩
+└─ styles.css                디자인 토큰과 전역 스타일
+```
+
+공학용 계산기의 핵심 경계는 다음과 같습니다.
+
+```text
+MathLive 시각 수식 → 텍스트 문법 변환 → 토큰화 → 파싱 → 평가 → 결과 형식화
+```
+
+MathLive는 입력과 렌더링만 담당하며 계산 결과를 결정하지 않습니다. 자세한 책임과 확장 절차는 [아키텍처 문서](docs/ARCHITECTURE.md)에 있습니다.
+
+## 경로와 배포
+
+GitHub Pages 새로고침과 직접 링크를 위해 해시 경로를 사용합니다.
+
+| URL | 화면 |
 | --- | --- |
 | `/tool/#/` | 도구 홈 |
 | `/tool/#/t` | t 임계값 계산기 |
 | `/tool/#/scientific` | 공학용 계산기 |
 
-잘못된 해시 경로는 도구 홈으로 정리됩니다. 각 계산기 화면은 지연 로딩되어 홈의 초기 번들에 포함되지 않습니다.
+`main` 푸시는 테스트와 빌드가 성공한 경우에만 GitHub Pages로 배포됩니다. Pull Request에는 별도의 품질 검사 워크플로가 실행됩니다.
 
-## 기술 스택
+## 개인정보와 계산 범위
 
-- React 19, TypeScript, Vite 8
-- Tailwind CSS 4, shadcn/ui 방식의 로컬 UI 컴포넌트, Radix UI
-- jStat, Recharts, Motion, Zod, Vitest
-- GitHub Actions와 GitHub Pages
+- 입력·결과·계산 기록을 서버, 쿠키 또는 브라우저 저장소에 저장하지 않습니다.
+- 최근 기록은 현재 React 세션에만 있으며 새로고침하면 사라집니다.
+- 내부 정밀도는 JavaScript `Number`를 따르며 결과는 최대 12자리 유효숫자로 표시합니다.
+- 결과는 학습·참고용 일반 계산값이며 금융상품, 회계 또는 법적 규칙을 별도로 적용하지 않습니다.
 
-주요 책임은 다음과 같이 나뉩니다.
-
-```text
-src/
-├─ pages/
-│  ├─ HomePage.tsx
-│  ├─ TCalculatorPage.tsx
-│  └─ ScientificCalculatorPage.tsx
-├─ lib/
-│  ├─ statistics.ts
-│  └─ scientificCalculator.ts
-├─ components/
-│  ├─ DistributionChart.tsx
-│  └─ ui/
-└─ App.tsx
-```
-
-- `App.tsx`: 공통 셸, 해시 라우팅, 화면 지연 로딩
-- `statistics.ts`: t 분포 입력 검증과 계산
-- `scientificCalculator.ts`: 수식 토큰화, 파싱, 평가, 결과 형식화
-- `pages`: 화면 상태와 사용자 상호작용
-
-## 로컬 개발
-
-요구 사항은 Node.js 24, pnpm 11.9 이상과 Git입니다.
-
-```bash
-pnpm install
-pnpm dev
-```
-
-품질 확인:
-
-```bash
-pnpm test
-pnpm build
-```
-
-`pnpm test`는 다음을 검증합니다.
-
-- 기존 t 분포 기준값, 꼬리 확률 변환과 입력 오류
-- 연산 우선순위, 괄호, 오른쪽 결합 거듭제곱과 단항 음수
-- 로그·제곱근·지수·상수·`Ans`와 암시적 곱셈
-- 일반 계산기식 퍼센트
-- 정의역 오류, 0 나눗셈, 잘못된 수식
-- 결과 반올림, 과학적 표기와 음의 0 정규화
-
-## 계산 규칙
-
-- 거듭제곱은 오른쪽 결합입니다: `2^3^2 = 512`
-- 단항 음수보다 거듭제곱이 우선합니다: `-2^2 = -4`, `(-2)^2 = 4`
-- 덧셈과 뺄셈의 퍼센트는 왼쪽 값을 기준으로 합니다: `200 + 10% = 220`
-- 곱셈의 퍼센트는 백분율 값으로 사용합니다: `200 × 10% = 20`
-- 음수 제곱근과 0 이하 로그는 실수 범위 오류로 처리합니다.
-- 비유한 결과와 0 나눗셈은 결과 대신 한국어 오류를 표시합니다.
-
-공학용 계산기의 최근 기록은 React 상태에만 존재하므로 페이지를 새로고침하면 사라집니다. `localStorage`, 쿠키, 서버 저장소는 사용하지 않습니다.
-
-## 디자인과 접근성
-
-- 종이색 배경, 짙은 잉크색과 하나의 녹색 강조색을 공통으로 사용합니다.
-- 홈은 도구를 큰 행 단위로 제시하고 계산기 화면은 입력·결과·보조 기록의 위계를 유지합니다.
-- 모바일에서는 계산기와 기록이 세로로 이어지고 기록 패널을 접을 수 있습니다.
-- 모든 핵심 기능은 키보드로 조작할 수 있으며 상태와 오류는 스크린리더에 전달됩니다.
-- `prefers-reduced-motion` 사용자의 설정을 존중합니다.
-
-## 배포
-
-`main` 브랜치에 푸시하면 `.github/workflows/pages.yml`이 다음 순서로 실행됩니다.
-
-1. 잠금 파일 기준 의존성 설치
-2. Vitest 실행
-3. TypeScript 검사와 Vite 빌드
-4. `dist`를 GitHub Pages에 배포
-
-Vite의 기본 경로는 저장소 이름에 맞춰 `/tool/`로 유지합니다. 테스트나 빌드가 실패하면 배포하지 않습니다.
-
-## 이번 버전에서 제외한 기능
-
-삼각함수, 팩토리얼, 순열·조합, 복소수, 단위 변환, 메모리 키, 사용자 계정과 서버 저장은 포함하지 않습니다. 계산 결과는 학습과 참고를 위한 일반 계산값이며 금융상품이나 회계 규칙을 별도로 적용하지 않습니다.
+새 기능을 제안하거나 계산 결과 오류를 발견했다면 GitHub 이슈 템플릿에 입력값, 예상값과 실제값을 함께 남겨 주세요.
