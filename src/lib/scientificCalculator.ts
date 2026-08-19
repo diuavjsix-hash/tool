@@ -1,6 +1,7 @@
 export interface HistoryEntry {
   id: string
   expression: string
+  latex: string
   result: string
   value: number
   createdAt: number

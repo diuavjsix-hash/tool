@@ -1,8 +1,10 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { Check, ChevronDown, Copy, Delete, History, ShieldCheck, Trash2 } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, ChevronDown, Copy, Delete, History, ShieldCheck, Trash2 } from 'lucide-react'
+import { MathfieldElement } from 'mathlive'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '../components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../components/ui/tooltip'
+import { formattedNumberToLatex, mathfieldLatexToExpression } from '../lib/mathfield'
 import {
   evaluateExpression,
   formatCalculatorResult,
@@ -21,7 +23,7 @@ function CalculatorKey({ tone = 'number', className, children, onMouseDown, ...p
     <button
       type="button"
       className={cn(
-        'calculator-key h-12 rounded-xl border text-sm font-semibold tabular-nums outline-none transition-[transform,background-color,border-color,color,box-shadow] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card active:translate-y-px sm:h-13',
+        'calculator-key inline-grid h-12 place-items-center rounded-xl border text-sm font-semibold tabular-nums outline-none transition-[transform,background-color,border-color,color,box-shadow] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card active:translate-y-px sm:h-13',
         tone === 'number' && 'border-border bg-background text-foreground hover:border-primary/25 hover:bg-accent/55',
         tone === 'operator' && 'border-primary/15 bg-secondary text-secondary-foreground hover:bg-secondary/72',
         tone === 'function' && 'border-border/80 bg-muted/70 text-foreground hover:border-primary/25 hover:bg-accent',
@@ -44,10 +46,19 @@ function timeLabel(timestamp: number) {
   return new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit' }).format(timestamp)
 }
 
+function FractionKeyLabel() {
+  return (
+    <span className="grid min-w-5 place-items-center text-[10px] leading-none" aria-hidden="true">
+      <span className="w-full border-b border-current px-1 pb-0.5">□</span>
+      <span className="px-1 pt-0.5">□</span>
+    </span>
+  )
+}
+
 export default function ScientificCalculatorPage() {
   const reduceMotion = useReducedMotion()
-  const inputRef = useRef<HTMLInputElement>(null)
-  const selectionRef = useRef({ start: 0, end: 0 })
+  const mathfieldHostRef = useRef<HTMLDivElement>(null)
+  const mathfieldRef = useRef<MathfieldElement | null>(null)
   const [expression, setExpression] = useState('')
   const [displayResult, setDisplayResult] = useState('0')
   const [answer, setAnswer] = useState<number | null>(null)
@@ -57,119 +68,124 @@ export default function ScientificCalculatorPage() {
   const [justEvaluated, setJustEvaluated] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  const focusInput = (position: number) => {
-    selectionRef.current = { start: position, end: position }
-    window.requestAnimationFrame(() => {
-      inputRef.current?.focus()
-      inputRef.current?.setSelectionRange(position, position)
-    })
-  }
+  useEffect(() => {
+    const host = mathfieldHostRef.current
+    if (!host) return
 
-  const selection = (base: string) => {
-    const start = Math.min(selectionRef.current.start, base.length)
-    const end = Math.min(selectionRef.current.end, base.length)
-    return { start, end }
-  }
+    MathfieldElement.soundsDirectory = null
+    const mathfield = new MathfieldElement()
+    mathfield.id = 'calculator-expression'
+    mathfield.className = 'calculator-mathfield'
+    mathfield.mathVirtualKeyboardPolicy = 'manual'
+    mathfield.smartFence = true
+    mathfield.smartSuperscript = true
+    mathfield.popoverPolicy = 'off'
+    mathfield.placeholder = '\\text{예: }200+10\\%\\;\\text{또는}\\;\\ln(e^5)'
+    mathfield.setAttribute('aria-label', '계산식')
+    mathfield.setAttribute('aria-describedby', 'calculator-status')
 
-  const editingContext = (kind: InputKind) => {
-    if (justEvaluated) {
-      const base = kind === 'operator' && answer !== null ? formatCalculatorResult(answer) : ''
-      return { base, start: base.length, end: base.length }
+    const handleInput = () => {
+      setExpression(mathfieldLatexToExpression(mathfield.value))
+      setError(null)
+      setJustEvaluated(false)
     }
 
-    const range = selection(expression)
-    return { base: expression, ...range }
-  }
+    mathfield.addEventListener('input', handleInput)
+    host.append(mathfield)
+    mathfield.menuItems = []
+    mathfieldRef.current = mathfield
 
-  const updateExpression = (nextExpression: string, caret: number) => {
-    setExpression(nextExpression.slice(0, 256))
-    setJustEvaluated(false)
+    return () => {
+      mathfield.removeEventListener('input', handleInput)
+      mathfield.remove()
+      mathfieldRef.current = null
+    }
+  }, [])
+
+  const synchronizeMathfield = () => {
+    const mathfield = mathfieldRef.current
+    if (!mathfield) return
+    setExpression(mathfieldLatexToExpression(mathfield.value))
     setError(null)
-    focusInput(Math.min(caret, 256))
+    setJustEvaluated(false)
   }
 
-  const insertToken = (token: string, kind: InputKind = 'value') => {
-    const { base, start, end } = editingContext(kind)
-    const next = `${base.slice(0, start)}${token}${base.slice(end)}`
-    updateExpression(next, start + token.length)
-  }
+  const prepareMathfield = (kind: InputKind) => {
+    const mathfield = mathfieldRef.current
+    if (!mathfield) return null
 
-  const wrapSelection = (prefix: string, suffix = ')') => {
-    let { base, start, end } = editingContext('value')
-
-    if (justEvaluated && answer !== null) {
-      const previousResult = formatCalculatorResult(answer)
-      base = previousResult
-      start = 0
-      end = previousResult.length
+    if (justEvaluated) {
+      const value = kind === 'operator' && answer !== null
+        ? formattedNumberToLatex(formatCalculatorResult(answer))
+        : ''
+      mathfield.setValue(value, { silenceNotifications: true })
+      mathfield.position = mathfield.lastOffset
+      setExpression(mathfieldLatexToExpression(value))
+      setJustEvaluated(false)
     }
 
-    const selected = base.slice(start, end)
-    const replacement = `${prefix}${selected}${suffix}`
-    const next = `${base.slice(0, start)}${replacement}${base.slice(end)}`
-    const caret = selected ? start + replacement.length : start + prefix.length
-    updateExpression(next, caret)
+    mathfield.focus()
+    return mathfield
+  }
+
+  const insertMath = (latex: string, kind: InputKind = 'value') => {
+    const mathfield = prepareMathfield(kind)
+    if (!mathfield) return
+    mathfield.insert(latex, { insertionMode: 'replaceSelection', selectionMode: 'after' })
+    synchronizeMathfield()
+  }
+
+  const insertTemplate = (emptyTemplate: string, selectedTemplate: string, kind: InputKind = 'value') => {
+    const mathfield = prepareMathfield(kind)
+    if (!mathfield) return
+    const hasSelection = !mathfield.selectionIsCollapsed
+    mathfield.insert(hasSelection ? selectedTemplate : emptyTemplate, {
+      insertionMode: 'replaceSelection',
+      selectionMode: hasSelection ? 'after' : 'placeholder',
+    })
+    synchronizeMathfield()
   }
 
   const appendSquare = () => {
-    const { base, start, end } = editingContext('operator')
-    const selected = base.slice(start, end)
-    const replacement = selected ? `(${selected})^2` : '^2'
-    const next = `${base.slice(0, start)}${replacement}${base.slice(end)}`
-    updateExpression(next, start + replacement.length)
+    insertTemplate('^{2}', '\\left(#0\\right)^{2}', 'operator')
   }
 
   const toggleSign = () => {
-    if (justEvaluated && answer !== null) {
-      const next = `-(${formatCalculatorResult(answer)})`
-      updateExpression(next, next.length)
-      return
-    }
-
-    const { start, end } = selection(expression)
-    const selected = expression.slice(start, end)
-    if (selected) {
-      const replacement = `-(${selected})`
-      updateExpression(`${expression.slice(0, start)}${replacement}${expression.slice(end)}`, start + replacement.length)
-      return
-    }
-
-    if (expression.startsWith('-(') && expression.endsWith(')')) {
-      const unwrapped = expression.slice(2, -1)
-      updateExpression(unwrapped, unwrapped.length)
-      return
-    }
-
-    const next = expression ? `-(${expression})` : '-'
-    updateExpression(next, next.length)
+    const mathfield = prepareMathfield('operator')
+    if (!mathfield) return
+    if (mathfield.selectionIsCollapsed && mathfield.value) mathfield.executeCommand('selectAll')
+    mathfield.insert(mathfield.selectionIsCollapsed ? '-' : '-\\left(#0\\right)', {
+      insertionMode: 'replaceSelection',
+      selectionMode: 'after',
+    })
+    synchronizeMathfield()
   }
 
   const deleteBackward = () => {
+    const mathfield = mathfieldRef.current
+    if (!mathfield) return
     if (justEvaluated) {
+      mathfield.setValue('', { silenceNotifications: true })
       setExpression('')
       setDisplayResult('0')
       setError(null)
       setJustEvaluated(false)
-      focusInput(0)
+      mathfield.focus()
       return
     }
-
-    const { start, end } = selection(expression)
-    if (start !== end) {
-      updateExpression(`${expression.slice(0, start)}${expression.slice(end)}`, start)
-      return
-    }
-    if (start === 0) return
-    updateExpression(`${expression.slice(0, start - 1)}${expression.slice(end)}`, start - 1)
+    mathfield.executeCommand('deleteBackward')
+    synchronizeMathfield()
   }
 
   const clearCalculator = () => {
+    const mathfield = mathfieldRef.current
+    mathfield?.setValue('', { silenceNotifications: true })
     setExpression('')
     setDisplayResult('0')
     setAnswer(null)
     setError(null)
     setJustEvaluated(false)
-    focusInput(0)
+    mathfield?.focus()
   }
 
   const calculateCurrentExpression = () => {
@@ -183,6 +199,7 @@ export default function ScientificCalculatorPage() {
 
     const formatted = formatCalculatorResult(evaluation.value)
     const createdAt = Date.now()
+    const latex = mathfieldRef.current?.value ?? expression
     setDisplayResult(formatted)
     setAnswer(evaluation.value)
     setError(null)
@@ -191,6 +208,7 @@ export default function ScientificCalculatorPage() {
       {
         id: `${createdAt}-${current.length}`,
         expression: expression.trim(),
+        latex,
         result: formatted,
         value: evaluation.value,
         createdAt,
@@ -207,12 +225,22 @@ export default function ScientificCalculatorPage() {
   }
 
   const restoreHistory = (entry: HistoryEntry) => {
+    const mathfield = mathfieldRef.current
+    mathfield?.setValue(entry.latex, { silenceNotifications: true })
+    if (mathfield) mathfield.position = mathfield.lastOffset
     setExpression(entry.expression)
     setDisplayResult(entry.result)
     setAnswer(entry.value)
     setError(null)
     setJustEvaluated(false)
-    focusInput(entry.expression.length)
+    mathfield?.focus()
+  }
+
+  const moveCursor = (command: 'moveToPreviousChar' | 'moveToNextChar' | 'moveUp' | 'moveDown') => {
+    const mathfield = mathfieldRef.current
+    if (!mathfield) return
+    mathfield.focus()
+    mathfield.executeCommand(command)
   }
 
   return (
@@ -230,30 +258,9 @@ export default function ScientificCalculatorPage() {
               <label htmlFor="calculator-expression" className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground">EXPRESSION</label>
               <span className="hidden text-[10px] text-muted-foreground sm:inline">Enter로 계산 · Esc로 초기화</span>
             </div>
-            <input
-              ref={inputRef}
-              id="calculator-expression"
-              value={expression}
-              maxLength={256}
-              spellCheck={false}
-              autoComplete="off"
-              inputMode="text"
-              placeholder="예: 200 + 10% 또는 ln(e^5)"
-              onChange={(event) => {
-                setExpression(event.target.value)
-                selectionRef.current = {
-                  start: event.target.selectionStart ?? event.target.value.length,
-                  end: event.target.selectionEnd ?? event.target.value.length,
-                }
-                setError(null)
-                setJustEvaluated(false)
-              }}
-              onSelect={(event) => {
-                selectionRef.current = {
-                  start: event.currentTarget.selectionStart ?? expression.length,
-                  end: event.currentTarget.selectionEnd ?? expression.length,
-                }
-              }}
+            <div
+              ref={mathfieldHostRef}
+              className="mt-3 min-h-10"
               onKeyDown={(event) => {
                 if (event.key === 'Enter') {
                   event.preventDefault()
@@ -263,8 +270,6 @@ export default function ScientificCalculatorPage() {
                   clearCalculator()
                 }
               }}
-              aria-describedby="calculator-status"
-              className="mt-3 w-full border-0 bg-transparent p-0 font-mono text-base font-medium text-foreground outline-none placeholder:text-muted-foreground/65 sm:text-lg"
             />
 
             <div className="mt-6 flex min-h-20 items-end justify-between gap-4 border-t border-border pt-5 sm:min-h-24">
@@ -277,8 +282,12 @@ export default function ScientificCalculatorPage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={reduceMotion ? undefined : { opacity: 0, y: -4 }}
                     transition={{ duration: 0.18 }}
+                    title={displayResult}
                     className={cn(
-                      'mt-1 max-w-full overflow-x-auto text-[clamp(2.45rem,8vw,5.25rem)] font-semibold leading-none tracking-[-0.065em] tabular-nums',
+                      'result-value mt-1 min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-semibold leading-none tracking-[-0.065em] tabular-nums',
+                      displayResult.length > 18
+                        ? 'text-[clamp(1.65rem,5vw,3rem)]'
+                        : 'text-[clamp(2.45rem,8vw,5.25rem)]',
                       error ? 'text-destructive' : 'text-primary',
                     )}
                   >
@@ -297,41 +306,55 @@ export default function ScientificCalculatorPage() {
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-5 gap-2" aria-label="공학 함수 키패드">
-            <CalculatorKey tone="function" onClick={() => wrapSelection('ln(')}>ln</CalculatorKey>
-            <CalculatorKey tone="function" onClick={() => wrapSelection('log(')}>log</CalculatorKey>
-            <CalculatorKey tone="function" onClick={() => wrapSelection('sqrt(')}>√x</CalculatorKey>
+          <div className="mt-3 flex justify-end gap-1.5" role="group" aria-label="수식 커서 이동">
+            <CalculatorKey tone="action" className="size-10 h-10" onClick={() => moveCursor('moveToPreviousChar')} aria-label="커서 왼쪽으로 이동"><ArrowLeft size={17} /></CalculatorKey>
+            <CalculatorKey tone="action" className="size-10 h-10" onClick={() => moveCursor('moveUp')} aria-label="커서 위로 이동"><ArrowUp size={17} /></CalculatorKey>
+            <CalculatorKey tone="action" className="size-10 h-10" onClick={() => moveCursor('moveDown')} aria-label="커서 아래로 이동"><ArrowDown size={17} /></CalculatorKey>
+            <CalculatorKey tone="action" className="size-10 h-10" onClick={() => moveCursor('moveToNextChar')} aria-label="커서 오른쪽으로 이동"><ArrowRight size={17} /></CalculatorKey>
+          </div>
+
+          <div className="mt-3 grid grid-cols-6 gap-2" aria-label="공학 함수 키패드">
+            <CalculatorKey tone="function" onClick={() => insertTemplate('\\ln\\left(\\placeholder{}\\right)', '\\ln\\left(#0\\right)')}>ln</CalculatorKey>
+            <CalculatorKey tone="function" onClick={() => insertTemplate('\\log\\left(\\placeholder{}\\right)', '\\log\\left(#0\\right)')}>log</CalculatorKey>
+            <CalculatorKey tone="function" onClick={() => insertTemplate('\\sqrt{\\placeholder{}}', '\\sqrt{#0}')}>√x</CalculatorKey>
             <CalculatorKey tone="function" onClick={appendSquare}>x²</CalculatorKey>
-            <CalculatorKey tone="function" onClick={() => insertToken('^', 'operator')}>xʸ</CalculatorKey>
-            <CalculatorKey tone="function" onClick={() => wrapSelection('e^(')}>eˣ</CalculatorKey>
-            <CalculatorKey tone="function" onClick={() => wrapSelection('10^(')}>10ˣ</CalculatorKey>
-            <CalculatorKey tone="function" onClick={() => insertToken('π')}>π</CalculatorKey>
-            <CalculatorKey tone="function" onClick={() => insertToken('e')}>e</CalculatorKey>
-            <CalculatorKey tone="function" onClick={() => wrapSelection('1/(')}>1/x</CalculatorKey>
+            <CalculatorKey tone="function" onClick={() => insertTemplate('^{\\placeholder{}}', '\\left(#0\\right)^{\\placeholder{}}', 'operator')}>xʸ</CalculatorKey>
+            <CalculatorKey tone="function" onClick={() => insertTemplate('e^{\\placeholder{}}', 'e^{#0}')}>eˣ</CalculatorKey>
+            <CalculatorKey tone="function" onClick={() => insertTemplate('10^{\\placeholder{}}', '10^{#0}')}>10ˣ</CalculatorKey>
+            <CalculatorKey tone="function" onClick={() => insertMath('\\pi')}>π</CalculatorKey>
+            <CalculatorKey tone="function" onClick={() => insertMath('e')}>e</CalculatorKey>
+            <CalculatorKey tone="function" onClick={() => insertTemplate('\\frac{1}{\\placeholder{}}', '\\frac{1}{#0}')}>1/x</CalculatorKey>
+            <CalculatorKey
+              tone="function"
+              onClick={() => insertTemplate('\\frac{\\placeholder{}}{\\placeholder{}}', '\\frac{#0}{\\placeholder{}}')}
+              aria-label="분수 입력"
+            >
+              <FractionKeyLabel />
+            </CalculatorKey>
           </div>
 
           <div className="mt-2 grid grid-cols-5 gap-2" aria-label="숫자 및 연산 키패드">
             <CalculatorKey tone="action" onClick={clearCalculator}>AC</CalculatorKey>
-            <CalculatorKey tone="action" onClick={() => insertToken('(')}>(</CalculatorKey>
-            <CalculatorKey tone="action" onClick={() => insertToken(')')}>)</CalculatorKey>
-            <CalculatorKey tone="operator" onClick={() => insertToken('%', 'operator')}>%</CalculatorKey>
-            <CalculatorKey tone="action" onClick={deleteBackward} aria-label="한 글자 삭제"><Delete size={18} /></CalculatorKey>
+            <CalculatorKey tone="action" onClick={() => insertMath('(')}>(</CalculatorKey>
+            <CalculatorKey tone="action" onClick={() => insertMath(')')}>)</CalculatorKey>
+            <CalculatorKey tone="operator" onClick={() => insertMath('\\%', 'operator')}>%</CalculatorKey>
+            <CalculatorKey tone="action" onClick={deleteBackward} aria-label="한 글자 삭제"><Delete className="block" size={18} /></CalculatorKey>
 
-            {[7, 8, 9].map((number) => <CalculatorKey key={number} onClick={() => insertToken(String(number))}>{number}</CalculatorKey>)}
-            <CalculatorKey tone="operator" onClick={() => insertToken('÷', 'operator')}>÷</CalculatorKey>
-            <CalculatorKey tone="function" onClick={() => insertToken('Ans')}>Ans</CalculatorKey>
+            {[7, 8, 9].map((number) => <CalculatorKey key={number} onClick={() => insertMath(String(number))}>{number}</CalculatorKey>)}
+            <CalculatorKey tone="operator" onClick={() => insertMath('\\div', 'operator')}>÷</CalculatorKey>
+            <CalculatorKey tone="function" onClick={() => insertMath('\\mathrm{Ans}')}>Ans</CalculatorKey>
 
-            {[4, 5, 6].map((number) => <CalculatorKey key={number} onClick={() => insertToken(String(number))}>{number}</CalculatorKey>)}
-            <CalculatorKey tone="operator" onClick={() => insertToken('×', 'operator')}>×</CalculatorKey>
+            {[4, 5, 6].map((number) => <CalculatorKey key={number} onClick={() => insertMath(String(number))}>{number}</CalculatorKey>)}
+            <CalculatorKey tone="operator" onClick={() => insertMath('\\times', 'operator')}>×</CalculatorKey>
             <CalculatorKey tone="function" onClick={toggleSign}>±</CalculatorKey>
 
-            {[1, 2, 3].map((number) => <CalculatorKey key={number} onClick={() => insertToken(String(number))}>{number}</CalculatorKey>)}
-            <CalculatorKey tone="operator" onClick={() => insertToken('−', 'operator')}>−</CalculatorKey>
+            {[1, 2, 3].map((number) => <CalculatorKey key={number} onClick={() => insertMath(String(number))}>{number}</CalculatorKey>)}
+            <CalculatorKey tone="operator" onClick={() => insertMath('-', 'operator')}>−</CalculatorKey>
             <CalculatorKey tone="equals" onClick={calculateCurrentExpression} className="row-span-2 h-auto" aria-label="계산하기">=</CalculatorKey>
 
-            <CalculatorKey onClick={() => insertToken('0')} className="col-span-2">0</CalculatorKey>
-            <CalculatorKey onClick={() => insertToken('.')}>.</CalculatorKey>
-            <CalculatorKey tone="operator" onClick={() => insertToken('+', 'operator')}>+</CalculatorKey>
+            <CalculatorKey onClick={() => insertMath('0')} className="col-span-2">0</CalculatorKey>
+            <CalculatorKey onClick={() => insertMath('.')}>.</CalculatorKey>
+            <CalculatorKey tone="operator" onClick={() => insertMath('+', 'operator')}>+</CalculatorKey>
           </div>
 
           <p
