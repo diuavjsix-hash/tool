@@ -55,6 +55,29 @@ button { cursor: pointer; }
 button:disabled { cursor: default; }
 ::selection { background: #bee5da; color: var(--foreground); }
 
+.calculator-display {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+.calculator-key {
+  min-width: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.history-content {
+  scrollbar-color: var(--border) transparent;
+  scrollbar-width: thin;
+}
+
+.history-content::-webkit-scrollbar { width: 7px; }
+.history-content::-webkit-scrollbar-track { background: transparent; }
+.history-content::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--border);
+  background-clip: padding-box;
+}
+
 .range-input {
   height: 5px;
   appearance: none;
@@ -92,6 +115,13 @@ button:disabled { cursor: default; }
 .range-input:focus-visible { box-shadow: 0 0 0 4px rgba(10, 143, 117, 0.18); }
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button { opacity: 0.35; }
+
+@media (max-width: 420px) {
+  .calculator-key {
+    height: 2.75rem;
+    font-size: 0.78rem;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
