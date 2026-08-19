@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { Check, Copy, ShieldCheck } from 'lucide-react'
+import { Check, Copy } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { DistributionChart } from '../components/DistributionChart'
 import { Button } from '../components/ui/button'
@@ -71,16 +71,9 @@ export default function TCalculatorPage() {
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         className="mb-8 max-w-2xl sm:mb-10"
       >
-        <div className="mb-3 flex items-center gap-2 text-xs font-semibold text-primary">
-          <span className="size-1.5 rounded-full bg-primary" />
-          Student&apos;s t distribution
-        </div>
         <h1 className="text-balance text-[clamp(2rem,5vw,3.75rem)] font-semibold leading-[1.08] tracking-[-0.055em]">
-          확률을 입력하면, <span className="text-primary">t값</span>이 바로 보입니다.
+          Student&apos;s t distribution
         </h1>
-        <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">
-          확률 방식과 자유도를 선택해 Student t 분포의 임계값을 계산하세요. 모든 계산은 이 브라우저 안에서 처리됩니다.
-        </p>
       </motion.div>
 
       <motion.section
@@ -94,7 +87,6 @@ export default function TCalculatorPage() {
           <div className="mb-6 flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold">계산 조건</p>
-              <p className="mt-1 text-xs text-muted-foreground">값을 바꾸면 즉시 반영됩니다.</p>
             </div>
             <span className="rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-semibold text-muted-foreground">LIVE</span>
           </div>
@@ -243,16 +235,12 @@ export default function TCalculatorPage() {
             </div>
           </dl>
 
-          <p className={`mt-4 flex min-h-5 items-center gap-2 text-xs ${errorMessage ? 'text-destructive' : 'text-muted-foreground'}`} role="status">
-            {!errorMessage && <ShieldCheck size={14} className="text-primary" />}
-            {errorMessage ?? '입력 데이터는 외부로 전송되지 않습니다.'}
-          </p>
+          {errorMessage && <p className="mt-4 min-h-5 text-xs text-destructive" role="status">{errorMessage}</p>}
         </div>
       </motion.section>
 
       <footer className="mt-5 flex flex-col gap-1 text-[10px] leading-5 text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <span>jStat의 Student t 분포 함수를 사용합니다.</span>
-        <span>확률 계산은 브라우저에서만 처리됩니다.</span>
       </footer>
     </main>
   )
