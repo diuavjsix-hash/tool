@@ -217,24 +217,6 @@ export default function ScientificCalculatorPage() {
 
   return (
     <main className="mx-auto w-[min(1200px,calc(100%-24px))] pb-12 pt-8 sm:w-[min(1200px,calc(100%-32px))] sm:pt-12 lg:pb-20 lg:pt-16">
-      <motion.div
-        initial={reduceMotion ? false : { opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-        className="mb-7 max-w-2xl sm:mb-9"
-      >
-        <div className="mb-3 flex items-center gap-2 text-xs font-semibold text-primary">
-          <span className="size-1.5 rounded-full bg-primary" />
-          EXPRESSION CALCULATOR
-        </div>
-        <h1 className="text-balance text-[clamp(2rem,5vw,3.75rem)] font-semibold leading-[1.08] tracking-[-0.055em]">
-          수식을 쓰고, <span className="text-primary">한 번에</span> 계산하세요.
-        </h1>
-        <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">
-          퍼센트와 괄호, 거듭제곱, 로그와 지수 함수를 키패드 또는 키보드로 입력할 수 있습니다.
-        </p>
-      </motion.div>
-
       <motion.section
         initial={reduceMotion ? false : { opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
@@ -422,7 +404,6 @@ export default function ScientificCalculatorPage() {
 
       <footer className="mt-5 flex flex-col gap-1 text-[10px] leading-5 text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <span>JavaScript Number 정밀도로 계산하며 결과는 최대 12자리 유효숫자로 표시합니다.</span>
-        <span>계산식과 기록은 외부로 전송하거나 저장하지 않습니다.</span>
       </footer>
     </main>
   )
