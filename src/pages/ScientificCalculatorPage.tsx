@@ -80,7 +80,6 @@ export default function ScientificCalculatorPage() {
     mathfield.smartFence = true
     mathfield.smartSuperscript = true
     mathfield.popoverPolicy = 'off'
-    mathfield.placeholder = '\\text{예: }200+10\\%\\;\\text{또는}\\;\\ln(e^5)'
     mathfield.setAttribute('aria-label', '계산식')
     mathfield.setAttribute('aria-describedby', 'calculator-status')
 
