@@ -253,14 +253,14 @@ export default function ScientificCalculatorPage() {
         aria-label="공학용 계산기"
       >
         <div className="min-w-0 p-4 sm:p-7 lg:p-9">
-          <div className="calculator-display rounded-[20px] border border-border/80 bg-muted/38 p-4 sm:p-6">
+          <div className="calculator-display rounded-[20px] border border-border/80 bg-muted/38 p-3.5 sm:p-4">
             <div className="flex items-center justify-between gap-4">
               <label htmlFor="calculator-expression" className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground">EXPRESSION</label>
               <span className="hidden text-[10px] text-muted-foreground sm:inline">Enter로 계산 · Esc로 초기화</span>
             </div>
             <div
               ref={mathfieldHostRef}
-              className="mt-3 min-h-10"
+              className="mt-2 min-h-16 sm:min-h-18"
               onKeyDown={(event) => {
                 if (event.key === 'Enter') {
                   event.preventDefault()
@@ -272,7 +272,7 @@ export default function ScientificCalculatorPage() {
               }}
             />
 
-            <div className="mt-6 flex min-h-20 items-end justify-between gap-4 border-t border-border pt-5 sm:min-h-24">
+            <div className="mt-3 flex min-h-12 items-end justify-between gap-4 border-t border-border pt-3">
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground">RESULT</p>
                 <AnimatePresence mode="wait" initial={false}>
@@ -286,8 +286,8 @@ export default function ScientificCalculatorPage() {
                     className={cn(
                       'result-value mt-1 min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-semibold leading-none tracking-[-0.065em] tabular-nums',
                       displayResult.length > 18
-                        ? 'text-[clamp(1.65rem,5vw,3rem)]'
-                        : 'text-[clamp(2.45rem,8vw,5.25rem)]',
+                        ? 'text-[clamp(1.35rem,3.5vw,1.75rem)]'
+                        : 'text-[clamp(2rem,6vw,2.75rem)]',
                       error ? 'text-destructive' : 'text-primary',
                     )}
                   >
